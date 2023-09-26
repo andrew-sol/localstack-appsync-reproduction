@@ -2,6 +2,7 @@ import type { AWS } from '@serverless/typescript';
 
 import hello from '@functions/hello';
 import onSignUp from 'src/functions/user/on-sign-up';
+import { IamAction } from './src/lib/types/iam-action';
 
 const serverlessConfiguration: AWS = {
   service: 'api',
@@ -10,7 +11,7 @@ const serverlessConfiguration: AWS = {
   provider: {
     name: 'aws',
     runtime: 'nodejs18.x',
-    stage: 'dev',
+    stage: "${opt:stage,'local'}",
     region: 'eu-west-1',
     deploymentMethod: 'direct',
     apiGateway: {
@@ -18,10 +19,26 @@ const serverlessConfiguration: AWS = {
       shouldStartNameWithService: true,
     },
     environment: {
+      NODE_ENV: '${self:provider.stage}',
       AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
       NODE_OPTIONS: '--enable-source-maps --stack-trace-limit=1000',
-      USER_POOL_CLIENT_ID: {
-        ImportValue: '${self:provider.stage}-UserPoolClientId',
+      AWS_REGION: '${self:provider.region}',
+      DYNAMODB_TABLE_NAME: '${self:custom.dynamodbTableName}',
+    },
+    iam: {
+      role: {
+        statements: [
+          {
+            Effect: 'Allow',
+            Action: [
+              'dynamodb:PutItem',
+              'dynamodb:DeleteItem',
+              'dynamodb:GetItem',
+              'dynamodb:UpdateItem',
+            ] as IamAction[],
+            Resource: { 'Fn::GetAtt': ['appDatabase', 'Arn'] },
+          },
+        ],
       },
     },
   },
@@ -43,12 +60,34 @@ const serverlessConfiguration: AWS = {
       stages: ['local'],
     },
 
+    dynamodbTableName: '${self:provider.stage}-main',
     cognitoUserPoolName: '${self:service}-${self:provider.stage}-user-pool',
     cognitoIdentityPoolName:
       '${self:service}-${self:provider.stage}-identity-pool',
   },
   resources: {
     Resources: {
+      appDatabase: {
+        Type: 'AWS::DynamoDB::Table',
+        Properties: {
+          TableName: '${self:custom.dynamodbTableName}',
+          BillingMode: 'PAY_PER_REQUEST',
+          AttributeDefinitions: [
+            {
+              AttributeName: 'pk',
+              AttributeType: 'S',
+            },
+            {
+              AttributeName: 'sk',
+              AttributeType: 'S',
+            },
+          ],
+          KeySchema: [
+            { AttributeName: 'pk', KeyType: 'HASH' },
+            { AttributeName: 'sk', KeyType: 'RANGE' },
+          ],
+        },
+      },
       AppUserPool: {
         Type: 'AWS::Cognito::UserPool',
         Properties: {
@@ -105,6 +144,7 @@ const serverlessConfiguration: AWS = {
       },
     },
     Outputs: {
+      // fixme: delete
       UserPoolClientId: {
         Value: { Ref: 'AppUserPoolClient' },
         Export: { Name: '${self:provider.stage}-UserPoolClientId' },
