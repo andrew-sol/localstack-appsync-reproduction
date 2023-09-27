@@ -8,6 +8,3 @@ if ('LOCALSTACK_HOSTNAME' in process.env) {
 
 // DynamoDB Client
 export const db = new DynamoDB({ region: process.env.AWS_REGION, endpoint });
-
-export const pkUser = (userId: string) => `USER#${userId}`;
-export const skProfile = () => 'PROFILE';

@@ -1,8 +1,11 @@
 import type { AWS } from '@serverless/typescript';
 
 import hello from '@functions/hello';
-import onSignUp from 'src/functions/user/on-sign-up';
-import { IamAction } from './src/lib/types/iam-action';
+import onSignUp from 'src/modules/user/functions/on-sign-up';
+import { IamAction } from './src/types/iam-action';
+import { dynamodbConfig } from './infra/dynamodb.config';
+import { appSyncConfig } from './infra/app-sync.config';
+import { cognitoConfig } from './infra/cognito.config';
 
 const serverlessConfiguration: AWS = {
   service: 'api',
@@ -23,7 +26,6 @@ const serverlessConfiguration: AWS = {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
       NODE_OPTIONS: '--enable-source-maps --stack-trace-limit=1000',
       AWS_REGION: '${self:provider.region}',
-      DYNAMODB_TABLE_NAME: '${self:custom.dynamodbTableName}',
     },
     iam: {
       role: {
@@ -36,7 +38,7 @@ const serverlessConfiguration: AWS = {
               'dynamodb:GetItem',
               'dynamodb:UpdateItem',
             ] as IamAction[],
-            Resource: { 'Fn::GetAtt': ['appDatabase', 'Arn'] },
+            Resource: 'arn:aws:dynamodb:{self:provider.region}:*:*',
           },
         ],
       },
@@ -67,81 +69,9 @@ const serverlessConfiguration: AWS = {
   },
   resources: {
     Resources: {
-      appDatabase: {
-        Type: 'AWS::DynamoDB::Table',
-        Properties: {
-          TableName: '${self:custom.dynamodbTableName}',
-          BillingMode: 'PAY_PER_REQUEST',
-          AttributeDefinitions: [
-            {
-              AttributeName: 'pk',
-              AttributeType: 'S',
-            },
-            {
-              AttributeName: 'sk',
-              AttributeType: 'S',
-            },
-          ],
-          KeySchema: [
-            { AttributeName: 'pk', KeyType: 'HASH' },
-            { AttributeName: 'sk', KeyType: 'RANGE' },
-          ],
-        },
-      },
-      AppUserPool: {
-        Type: 'AWS::Cognito::UserPool',
-        Properties: {
-          UserPoolName: '${self:custom.cognitoUserPoolName}',
-          UsernameAttributes: ['email'],
-          AutoVerifiedAttributes: ['email'],
-          Policies: {
-            PasswordPolicy: {
-              MinimumLength: 8,
-              RequireLowercase: true,
-              RequireNumbers: true,
-              RequireSymbols: false,
-              RequireUppercase: true,
-            },
-          },
-          Schema: [
-            {
-              Name: 'email',
-              AttributeDataType: 'String',
-              Mutable: true,
-              Required: true,
-            },
-          ],
-          LambdaConfig: {
-            PostConfirmation: {
-              'Fn::GetAtt': ['OnSignUpLambdaFunction', 'Arn'],
-            },
-          },
-        },
-      },
-      // AppIdentityPool: {
-      //   Type: 'AWS::Cognito::IdentityPool',
-      //   Properties: {
-      //     IdentityPoolName: '${self:custom.cognitoIdentityPoolName}',
-      //     CognitoIdentityProviders: [
-      //       {
-      //         ClientId: { 'Fn::GetAtt': ['AppUserPoolClient', 'ClientID'] },
-      //         ProviderName: {
-      //           'Fn::Sub':
-      //             'cognito-idp.${self:provider.region}.amazonaws.com/${self:custom.cognitoUserPoolName}',
-      //         },
-      //       },
-      //     ],
-      //   },
-      // },
-      AppUserPoolClient: {
-        Type: 'AWS::Cognito::UserPoolClient',
-        Properties: {
-          ClientName: '${self:service}-${self:provider.stage}-user-pool-client',
-          UserPoolId: { Ref: 'AppUserPool' },
-          ExplicitAuthFlows: ['ALLOW_USER_PASSWORD_AUTH'],
-          GenerateSecret: false,
-        },
-      },
+      ...cognitoConfig,
+      ...dynamodbConfig,
+      ...appSyncConfig,
     },
     Outputs: {
       // fixme: delete
