@@ -17,10 +17,6 @@ const serverlessConfiguration: AWS = {
     stage: "${opt:stage,'local'}",
     region: 'eu-west-1',
     deploymentMethod: 'direct',
-    apiGateway: {
-      minimumCompressionSize: 1024,
-      shouldStartNameWithService: true,
-    },
     environment: {
       NODE_ENV: '${self:provider.stage}',
       AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
