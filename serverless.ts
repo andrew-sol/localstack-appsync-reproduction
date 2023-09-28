@@ -45,7 +45,7 @@ const serverlessConfiguration: AWS = {
     },
   },
   // import the function via paths
-  functions: { hello, onSignUp },
+  functions: { onSignUp },
   package: { individually: true },
   custom: {
     esbuild: {
