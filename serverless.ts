@@ -1,8 +1,7 @@
 import type { AWS } from '@serverless/typescript';
 
-import hello from '@functions/hello';
-import onSignUp from 'src/modules/user/functions/on-sign-up';
-import { IamAction } from './src/types/iam-action';
+import onSignUp from '@src/modules/user/functions/on-sign-up';
+import { IamAction } from '@src/types/iam-action';
 import { dynamodbConfig } from './infra/dynamodb.config';
 import { appSyncConfig } from './infra/app-sync.config';
 import { cognitoConfig } from './infra/cognito.config';
@@ -10,18 +9,22 @@ import { cognitoConfig } from './infra/cognito.config';
 const serverlessConfiguration: AWS = {
   service: 'api',
   frameworkVersion: '^3.15',
-  plugins: ['serverless-esbuild', 'serverless-localstack'],
+  configValidationMode: 'error',
+  plugins: [
+    'serverless-esbuild',
+    'serverless-localstack',
+    'serverless-appsync-plugin',
+  ],
   provider: {
     name: 'aws',
     runtime: 'nodejs18.x',
     stage: "${opt:stage,'local'}",
-    region: 'eu-west-1',
+    region: 'eu-central-1',
     deploymentMethod: 'direct',
     environment: {
       NODE_ENV: '${self:provider.stage}',
       AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
       NODE_OPTIONS: '--enable-source-maps --stack-trace-limit=1000',
-      AWS_REGION: '${self:provider.region}',
     },
     iam: {
       role: {
@@ -33,8 +36,10 @@ const serverlessConfiguration: AWS = {
               'dynamodb:DeleteItem',
               'dynamodb:GetItem',
               'dynamodb:UpdateItem',
+              'dynamodb:Query',
+              'dynamodb:Scan',
             ] as IamAction[],
-            Resource: 'arn:aws:dynamodb:{self:provider.region}:*:*',
+            Resource: 'arn:aws:dynamodb:${self:provider.region}:*:*',
           },
         ],
       },
@@ -63,11 +68,11 @@ const serverlessConfiguration: AWS = {
     cognitoIdentityPoolName:
       '${self:service}-${self:provider.stage}-identity-pool',
   },
+  ...appSyncConfig,
   resources: {
     Resources: {
       ...cognitoConfig,
       ...dynamodbConfig,
-      ...appSyncConfig,
     },
     Outputs: {
       // fixme: delete

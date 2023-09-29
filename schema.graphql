@@ -1,0 +1,19 @@
+schema {
+  query: Query
+}
+
+type Query {
+  getUser(id: ID!): User
+  users(limit: Int, nextToken: String): PaginatedUsers!
+}
+
+type User {
+  id: ID!
+  createdAt: String!
+  email: String!
+}
+
+type PaginatedUsers {
+  users: [User!]!
+  nextToken: String
+}

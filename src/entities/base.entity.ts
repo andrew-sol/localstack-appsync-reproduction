@@ -1,3 +1,4 @@
+// todo: will we use entities?
 export class BaseEntity {
   /**
    * UUID.

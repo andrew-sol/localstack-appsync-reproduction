@@ -1,4 +1,4 @@
-import { BaseCreateDto } from '../../../dto/base.dto';
+import { BaseCreateDto } from '@src/dto/base.dto';
 
 export class CreateUserDto extends BaseCreateDto {
   email: string;

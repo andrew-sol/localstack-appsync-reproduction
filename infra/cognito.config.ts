@@ -51,7 +51,10 @@ export const cognitoConfig: AWS['resources']['Resources'] = {
     Properties: {
       ClientName: '${self:service}-${self:provider.stage}-user-pool-client',
       UserPoolId: { Ref: 'AppUserPool' },
-      ExplicitAuthFlows: ['ALLOW_USER_PASSWORD_AUTH'],
+      ExplicitAuthFlows: [
+        'ALLOW_USER_PASSWORD_AUTH',
+        'ALLOW_REFRESH_TOKEN_AUTH',
+      ],
       GenerateSecret: false,
     },
   },
