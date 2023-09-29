@@ -6,7 +6,7 @@ For detailed instructions, please refer to the [documentation](https://www.serve
 
 ## Prerequisites
 
-[Serverless framework](https://www.serverless.com/framework/docs/getting-started)
+[Serverless framework](https://www.serverless.com/framework/docs/getting-started)  
 [LocalStack](https://docs.localstack.cloud/getting-started/installation/)
 
 ## Setup
