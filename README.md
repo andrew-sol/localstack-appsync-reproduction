@@ -21,12 +21,17 @@ yarn
 
 ## Deployment
 
-LocalStack:
+### LocalStack:
+
+```shell
+localstack start
+```
+
 ```shell
 yarn dl
 ```
 
-AWS:
+### AWS:
 ```shell
 yarn deploy-dev
 ```
